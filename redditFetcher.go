@@ -10,6 +10,7 @@ import (
 	"time"
 )
 
+// A Response represents the structure of the data fetched from reddit
 type Response struct {
 	Data struct {
 		Children []struct {
@@ -32,6 +33,7 @@ type Fetcher struct {
 	output Response
 }
 
+// NewFetcher creates new instace of Fetcher object.
 func NewFetcher(host string, t time.Duration) *Fetcher {
 	return &Fetcher{
 		host: host,
@@ -44,6 +46,7 @@ func NewFetcher(host string, t time.Duration) *Fetcher {
 	}
 }
 
+// Fetch fetches the data from given subreddit host and returns Response struct with data.
 func (e *Fetcher) Fetch(ctx context.Context) (Response, error) {
 	ctx = context.WithValue(ctx, "requestID", time.Now().Unix())
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, e.host, http.NoBody)
@@ -67,8 +70,9 @@ func (e *Fetcher) Fetch(ctx context.Context) (Response, error) {
 	e.output = data
 	return data, nil
 }
+
+// Save writes the data to a file.
 func (e *Fetcher) Save(w io.Writer) error {
-	//CREATE A TXT FILE
 	for _, child := range e.output.Data.Children {
 		d := fmt.Sprintf("%s\n%s\n\n", child.Data.Title, child.Data.URL)
 		_, err := w.Write([]byte(d))

@@ -10,8 +10,8 @@ import (
 )
 
 func main() {
-	//Solution to 429 error https://www.reddit.com/r/redditdev/comments/t8e8hc/getting_nothing_but_429_responses_when_using_go/
 
+	// Solution to 429 error https://www.reddit.com/r/redditdev/comments/t8e8hc/getting_nothing_but_429_responses_when_using_go/
 	var f RedditFetcher
 	var w io.Writer
 
@@ -25,6 +25,7 @@ func main() {
 
 var wg sync.WaitGroup
 
+// run function creates object Fetcher, fetches data and writes it to output file.
 func run(f RedditFetcher, w io.Writer, hostUrl, fileName string) {
 	defer wg.Done()
 	f = NewFetcher(hostUrl, time.Second*3)
