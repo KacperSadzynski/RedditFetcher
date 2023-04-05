@@ -23,7 +23,7 @@ type Response struct {
 }
 
 type RedditFetcher interface {
-	Fetch(context.Context) (Response, error)
+	Fetch(context.Context) error
 	Save(io.Writer) error
 }
 
@@ -46,36 +46,52 @@ func NewFetcher(host string, t time.Duration) *Fetcher {
 	}
 }
 
+type key int
+
+const keyPrincipalID key = iota
+
 // Fetch fetches the data from given subreddit host and returns Response struct with data.
-func (e *Fetcher) Fetch(ctx context.Context) (Response, error) {
-	ctx = context.WithValue(ctx, "requestID", time.Now().Unix())
+func (e *Fetcher) Fetch(ctx context.Context) error {
+
+	ctx = context.WithValue(ctx, keyPrincipalID, time.Now().Unix())
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, e.host, http.NoBody)
+
 	if err != nil {
-		return Response{}, fmt.Errorf("cannot create request: %w", err)
+		return fmt.Errorf("cannot create request: %w", err)
 	}
+
 	req.Header.Set("User-Agent", "Custom Agent")
 	resp, err := e.c.Do(req)
+
 	if err != nil {
-		return Response{}, fmt.Errorf("cannot get data: %w", err)
+		return fmt.Errorf("cannot get data: %w", err)
 	}
+
 	defer resp.Body.Close()
+
 	if resp.StatusCode != http.StatusOK {
-		return Response{}, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+		return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
 	}
+
 	var data Response
 	err = json.NewDecoder(resp.Body).Decode(&data)
+
 	if err != nil {
-		return Response{}, fmt.Errorf("cannot unmarshal data: %w", err)
+		return fmt.Errorf("cannot unmarshal data: %w", err)
 	}
+
 	e.output = data
-	return data, nil
+	return nil
 }
 
 // Save writes the data to a file.
 func (e *Fetcher) Save(w io.Writer) error {
+
 	for _, child := range e.output.Data.Children {
+
 		d := fmt.Sprintf("%s\n%s\n\n", child.Data.Title, child.Data.URL)
 		_, err := w.Write([]byte(d))
+
 		if err != nil {
 			return err
 		}
